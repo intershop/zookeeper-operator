@@ -1,3 +1,5 @@
+fork of [parvega/zookeeper-operator](https://github.com/pravega/zookeeper-operator) to upgrade zookeeper and depedendencies.
+
 # Zookeeper Operator
 [![Build Status](https://travis-ci.org/pravega/zookeeper-operator.svg?branch=master)](https://travis-ci.org/pravega/zookeeper-operator)
 ### Project status: alpha
