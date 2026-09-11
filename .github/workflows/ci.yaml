@@ -43,7 +43,7 @@ jobs:
         minikube-version: 1.39.0
         kubernetes-version: v1.35.7
         driver: docker
-        container-runtime: containerd
+        container-runtime: docker
         wait: true
     - name: Check the cluster
       run: |
