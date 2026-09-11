@@ -69,3 +69,26 @@ jobs:
           --docker-email="$DOCKER_EMAIL"
     - name: E2E
       run: make test-e2e
+    - name: E2E diagnostics
+      if: always()
+      run: |
+        echo "=== Pods ==="
+        kubectl get pods -A -o wide
+
+        echo "=== Zookeeper resources ==="
+        kubectl get zookeeperclusters,statefulsets,pods,pvc -A -o wide
+
+        echo "=== Events ==="
+        kubectl get events -A --sort-by=.lastTimestamp
+
+        echo "=== Zookeeper pod descriptions ==="
+        kubectl describe pods -l kind=ZookeeperMember -n default || true
+
+        echo "=== Zookeeper logs ==="
+        for pod in $(kubectl get pods -n default -l kind=ZookeeperMember -o name); do
+          echo "=== $pod ==="
+          kubectl logs "$pod" -n default -c zookeeper --all-containers=true || true
+        done
+
+        echo "=== Operator logs ==="
+        kubectl logs deployment/zookeeper-operator -n default --all-containers=true || true
