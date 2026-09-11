@@ -41,9 +41,9 @@ jobs:
       uses: medyagh/setup-minikube@v0.0.21
       with:
         minikube-version: 1.39.0
-        kubernetes-version: v1.35.7
+        kubernetes-version: v1.28.15
         driver: docker
-        container-runtime: docker
+        container-runtime: containerd
         wait: true
     - name: Check the cluster
       run: |
