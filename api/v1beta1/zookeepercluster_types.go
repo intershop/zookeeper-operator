@@ -23,6 +23,8 @@ const (
 	// DefaultZkContainerRepository is the default docker repo for the zookeeper
 	// container
 	DefaultZkContainerRepository = "pravega/zookeeper"
+	// DefaultJMXDisable disables ZooKeeper JMX to avoid cgroup v2 failures in containers.
+	DefaultJMXDisable = "true"
 
 	// DefaultZkContainerVersion is the default tag used for for the zookeeper
 	// container
@@ -492,6 +494,10 @@ func (p *PodPolicy) withDefaults(z *ZookeeperCluster) (changed bool) {
 		p.ServiceAccountName = "default"
 		changed = true
 	}
+	if !hasEnvVar(p.Env, "JMXDISABLE") {
+		p.Env = append(p.Env, v1.EnvVar{Name: "JMXDISABLE", Value: DefaultJMXDisable})
+		changed = true
+	}
 	if z.Spec.Pod.Labels == nil {
 		p.Labels = map[string]string{}
 		changed = true
@@ -529,6 +535,15 @@ func (p *PodPolicy) withDefaults(z *ZookeeperCluster) (changed bool) {
 		changed = true
 	}
 	return changed
+}
+
+func hasEnvVar(env []v1.EnvVar, name string) bool {
+	for _, variable := range env {
+		if variable.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 type AdminServerServicePolicy struct {
