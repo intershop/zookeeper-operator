@@ -72,23 +72,55 @@ jobs:
     - name: E2E diagnostics
       if: always()
       run: |
-        echo "=== Pods ==="
-        kubectl get pods -A -o wide
+        set +e
 
-        echo "=== Zookeeper resources ==="
-        kubectl get zookeeperclusters,statefulsets,pods,pvc -A -o wide
+        echo "=== Context ==="
+        kubectl config current-context
+        kubectl get nodes -o wide
+
+        echo "=== All resources in default ==="
+        kubectl get all -n default -o wide
+
+        echo "=== All pods with labels ==="
+        kubectl get pods -A -o wide --show-labels
+
+        echo "=== ZookeeperCluster objects ==="
+        kubectl get zookeeperclusters -A -o yaml
+
+        echo "=== StatefulSets ==="
+        kubectl get statefulsets -A -o yaml
+
+        echo "=== PVCs ==="
+        kubectl get pvc -A -o wide
 
         echo "=== Events ==="
         kubectl get events -A --sort-by=.lastTimestamp
 
-        echo "=== Zookeeper pod descriptions ==="
-        kubectl describe pods -l kind=ZookeeperMember -n default || true
-
-        echo "=== Zookeeper logs ==="
-        for pod in $(kubectl get pods -n default -l kind=ZookeeperMember -o name); do
+        echo "=== Pod descriptions ==="
+        for pod in $(kubectl get pods -A -o name); do
           echo "=== $pod ==="
-          kubectl logs "$pod" -n default -c zookeeper --all-containers=true || true
+          kubectl describe "$pod"
         done
 
-        echo "=== Operator logs ==="
-        kubectl logs deployment/zookeeper-operator -n default --all-containers=true || true
+        echo "=== Container logs ==="
+        for pod in $(kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{"\n"}{end}'); do
+          namespace=$(echo "$pod" | awk '{print $1}')
+          name=$(echo "$pod" | awk '{print $2}')
+          echo "=== $namespace/$name ==="
+          kubectl logs "$name" -n "$namespace" --all-containers=true --ignore-errors=true
+        done
+
+        echo "=== Previous logs for default/zookeeper-0 ==="
+        kubectl logs pod/zookeeper-0 -n default -c zookeeper --previous || true
+
+        echo "=== Pod logs with all containers ==="
+        kubectl get pods -A \
+          -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name' \
+          --no-headers |
+        while read -r namespace name; do
+          echo "=== $namespace/$name ==="
+          kubectl logs "$name" -n "$namespace" \
+            --all-containers=true --tail=-1 || true
+          kubectl logs "$name" -n "$namespace" \
+            --all-containers=true --previous --tail=-1 || true
+        done
