@@ -152,7 +152,7 @@ test-e2e-remote:
 	minikube image load $(TEST_IMAGE)
 	make deploy
 	
-	RUN_LOCAL=false go test -v -timeout 30m ./test/e2e... -ginkgo.focus="Basic test controller" -args -ginkgo.v
+	RUN_LOCAL=false go test -v -timeout 30m ./test/e2e... -args -ginkgo.v
 	make undeploy
 
 test-e2e-local:
