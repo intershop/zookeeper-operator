@@ -12,6 +12,9 @@ package e2e
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/go-logr/logr"
 	api "github.com/pravega/zookeeper-operator/api/v1beta1"
 	zookeeperv1beta1 "github.com/pravega/zookeeper-operator/api/v1beta1"
@@ -19,14 +22,12 @@ import (
 	zkClient "github.com/pravega/zookeeper-operator/pkg/zk"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -87,7 +88,7 @@ var _ = BeforeSuite(func() {
 	if os.Getenv("RUN_LOCAL") == "true" {
 		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: scheme.Scheme,
-			Cache:  cache.Options{Namespaces: []string{testNamespace}},
+			Cache:  cache.Options{DefaultNamespaces: map[string]cache.Config{testNamespace: {}}},
 		})
 		Expect(err).ToNot(HaveOccurred())
 
