@@ -123,7 +123,7 @@ var _ = Describe("Leader election utils", func() {
 			Context("when that node is in ProviderFailed state", func() {
 				BeforeEach(func() {
 					otherPod.Status.Reason = "ProviderFailed"
-					_ = client.Update(ctx, otherPod)
+					Expect(client.Status().Update(ctx, otherPod)).To(Succeed())
 
 					err = precheckLeaderLock(ctx, client, configmapName, namespace)
 				})

@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	api "github.com/pravega/zookeeper-operator/api/v1beta1"
 	"github.com/pravega/zookeeper-operator/controllers"
@@ -117,9 +118,9 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		Cache:              cache.Options{Namespaces: managerNamespaces},
-		MetricsBindAddress: metricsAddr,
+		Scheme:  scheme,
+		Cache:   cache.Options{DefaultNamespaces: namespacesToCacheConfig(managerNamespaces)},
+		Metrics: metricsserver.Options{BindAddress: metricsAddr},
 	})
 	if err != nil {
 		log.Error(err, "unable to start manager")
@@ -142,6 +143,18 @@ func main() {
 		log.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func namespacesToCacheConfig(namespaces []string) map[string]cache.Config {
+	if len(namespaces) == 0 {
+		return nil
+	}
+
+	result := make(map[string]cache.Config, len(namespaces))
+	for _, namespace := range namespaces {
+		result[namespace] = cache.Config{}
+	}
+	return result
 }
 
 // getWatchNamespace returns the Namespace the operator should be watching for changes
