@@ -12,6 +12,13 @@ on:
   release:
     types:
       - created
+  workflow_dispatch:
+    inputs:
+      run_e2e_diagnostics:
+        description: Run E2E tests with periodic Zookeeper diagnostics
+        required: false
+        type: boolean
+        default: false
 
 # jobs to run
 jobs:
@@ -67,7 +74,11 @@ jobs:
           --docker-username="$DOCKER_USERNAME" \
           --docker-password="$DOCKER_PASSWORD" \
           --docker-email="$DOCKER_EMAIL"
+    - name: E2E
+      if: ${{ !inputs.run_e2e_diagnostics }}
+      run: make test-e2e
     - name: E2E with diagnostics
+      if: ${{ inputs.run_e2e_diagnostics }}
       run: |
         set -o pipefail
 
