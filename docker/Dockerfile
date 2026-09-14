@@ -9,7 +9,7 @@
 #
 
 ARG DOCKER_REGISTRY
-FROM  ${DOCKER_REGISTRY:+$DOCKER_REGISTRY/}openjdk:11-jdk
+FROM  ${DOCKER_REGISTRY:+$DOCKER_REGISTRY/}eclipse-temurin:11-jdk
 RUN mkdir /zu
 COPY zu /zu
 WORKDIR /zu
