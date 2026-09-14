@@ -1,6 +1,8 @@
 module github.com/pravega/zookeeper-operator
 
-go 1.21
+go 1.26.0
+
+toolchain go1.26.4
 
 require (
 	github.com/ghodss/yaml v1.0.0
@@ -10,8 +12,8 @@ require (
 	github.com/operator-framework/operator-lib v0.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/sirupsen/logrus v1.9.0
-	golang.org/x/net v0.17.0
+	github.com/sirupsen/logrus v1.10.2
+	golang.org/x/net v0.59.0
 	k8s.io/api v0.27.5
 	k8s.io/apimachinery v0.27.5
 	k8s.io/client-go v0.27.5
@@ -54,13 +56,12 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/oauth2 v0.37.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/term v0.46.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
