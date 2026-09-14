@@ -12,8 +12,11 @@ package e2eutil
 
 import (
 	api "github.com/pravega/zookeeper-operator/api/v1beta1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const disableContainerSupport = "-XX:-UseContainerSupport"
 
 // NewDefaultCluster returns a cluster with an empty spec, which will be filled
 // with default values
@@ -27,7 +30,14 @@ func NewDefaultCluster(namespace string) *api.ZookeeperCluster {
 			Name:      "zookeeper",
 			Namespace: namespace,
 		},
-		Spec: api.ZookeeperClusterSpec{},
+		Spec: api.ZookeeperClusterSpec{
+			Pod: api.PodPolicy{
+				Env: []v1.EnvVar{{
+					Name:  "JAVA_TOOL_OPTIONS",
+					Value: disableContainerSupport,
+				}},
+			},
+		},
 	}
 }
 
@@ -37,6 +47,7 @@ func NewClusterWithVersion(namespace, version string) *api.ZookeeperCluster {
 		Image: api.ContainerImage{
 			Tag: version,
 		},
+		Pod: cluster.Spec.Pod,
 	}
 	return cluster
 }
@@ -45,6 +56,7 @@ func NewClusterWithEmptyDir(namespace string) *api.ZookeeperCluster {
 	cluster := NewDefaultCluster(namespace)
 	cluster.Spec = api.ZookeeperClusterSpec{
 		StorageType: "ephemeral",
+		Pod:         cluster.Spec.Pod,
 	}
 	return cluster
 }
