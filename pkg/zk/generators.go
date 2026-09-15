@@ -229,6 +229,7 @@ func MakeConfigMap(z *v1beta1.ZookeeperCluster) *v1.ConfigMap {
 			"zoo.cfg":                makeZkConfigString(z),
 			"log4j.properties":       makeZkLog4JConfigString(),
 			"log4j-quiet.properties": makeZkLog4JQuietConfigString(),
+			"logback.xml":            makeZkLogbackConfigString(),
 			"env.sh":                 makeZkEnvConfigString(z),
 		},
 	}
@@ -298,6 +299,24 @@ func makeZkLog4JConfigString() string {
 		"log4j.appender.CONSOLE.Threshold=${zookeeper.console.threshold}\n" +
 		"log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout\n" +
 		"log4j.appender.CONSOLE.layout.ConversionPattern=%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n\n"
+}
+
+func makeZkLogbackConfigString() string {
+	return "<configuration>\n" +
+		"  <property name=\"zookeeper.console.threshold\" value=\"${ZOO_LOG_LEVEL:-INFO}\" />\n" +
+		"  <appender name=\"CONSOLE\" class=\"ch.qos.logback.core.ConsoleAppender\">\n" +
+		"    <encoder class=\"co.elastic.logging.logback.EcsEncoder\">\n" +
+		"      <serviceName>zookeeper</serviceName>\n" +
+		"      <eventDataset>zookeeper.log</eventDataset>\n" +
+		"    </encoder>\n" +
+		"    <filter class=\"ch.qos.logback.classic.filter.ThresholdFilter\">\n" +
+		"      <level>${zookeeper.console.threshold}</level>\n" +
+		"    </filter>\n" +
+		"  </appender>\n" +
+		"  <root level=\"${ZOO_LOG_LEVEL:-INFO}\">\n" +
+		"    <appender-ref ref=\"CONSOLE\" />\n" +
+		"  </root>\n" +
+		"</configuration>\n"
 }
 
 func makeZkEnvConfigString(z *v1beta1.ZookeeperCluster) string {

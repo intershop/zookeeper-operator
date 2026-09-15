@@ -7,12 +7,14 @@ toolchain go1.26.8
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/zapr v1.3.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.38.2
 	github.com/operator-framework/operator-lib v0.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414
-	github.com/sirupsen/logrus v1.10.2
+	go.elastic.co/ecszap v1.0.3
+	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.59.0
 	k8s.io/api v0.35.7
 	k8s.io/apimachinery v0.35.7
@@ -29,7 +31,6 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
-	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
@@ -50,9 +51,9 @@ require (
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect

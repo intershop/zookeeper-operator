@@ -156,9 +156,11 @@ test-e2e: test-e2e-remote
 test-e2e-remote:
 	docker build . -t $(TEST_IMAGE)
 	minikube image load $(TEST_IMAGE)
+	make build-zk-image
+	minikube image load $(APP_REPO):$(VERSION)
 	make deploy
 	
-	RUN_LOCAL=false go test -v -timeout 2h ./test/e2e... -args -ginkgo.v
+	RUN_LOCAL=false ZK_TEST_IMAGE_TAG=$(VERSION) go test -v -timeout 2h ./test/e2e... -args -ginkgo.v
 	make undeploy
 
 test-e2e-local:

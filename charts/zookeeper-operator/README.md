@@ -41,7 +41,7 @@ The following table lists the configurable parameters of the zookeeper-operator 
 
 | Parameter | Description | Default |
 | ----- | ----------- | ------ |
-| `additionalEnv` | Additional Environment Variables | `[]` |
+| `additionalEnv` | Additional environment variables, including `OPERATOR_LOG_LEVEL` (`debug`, `info`, `warn`, or `error`) | `[]` |
 | `additionalSidecars` | Additional Sidecars Configuration | `[]` |
 | `additionalVolumes` | Additional volumes required for sidecars | `[]` |
 | `affinity` | Specifies scheduling constraints on pods | `{}` |
