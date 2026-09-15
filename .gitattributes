@@ -9,3 +9,6 @@ Makefile text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
 Dockerfile text eol=lf
+
+# Gradle wrapper must keep Unix line endings and its executable bit.
+gradlew text eol=lf
