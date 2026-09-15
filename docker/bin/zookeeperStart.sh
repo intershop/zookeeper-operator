@@ -17,7 +17,6 @@ source /usr/local/bin/zookeeperFunctions.sh
 HOST=`hostname -s`
 DATA_DIR=/data
 MYID_FILE=$DATA_DIR/myid
-LOG4J_CONF=/conf/log4j-quiet.properties
 DYNCONFIG=$DATA_DIR/zoo.cfg.dynamic
 STATIC_CONFIG=/data/conf/zoo.cfg
 
@@ -134,7 +133,7 @@ if [[ "$REGISTER_NODE" == true ]]; then
     ZKCONFIG=$(zkConfig)
     set -e
     echo Registering node and writing local configuration to disk.
-    java -Dlog4j.configuration=file:"$LOG4J_CONF" -jar /opt/libs/zu.jar add $ZKURL $MYID  $ZKCONFIG $DYNCONFIG
+    java -jar /opt/libs/zu.jar add $ZKURL $MYID  $ZKCONFIG $DYNCONFIG
     set +e
 fi
 
@@ -150,6 +149,7 @@ else
 fi
 cp -f /conf/log4j.properties $ZOOCFGDIR
 cp -f /conf/log4j-quiet.properties $ZOOCFGDIR
+cp -f /conf/logback.xml $ZOOCFGDIR
 cp -f /conf/env.sh $ZOOCFGDIR
 
 if [ -f $DYNCONFIG ]; then
