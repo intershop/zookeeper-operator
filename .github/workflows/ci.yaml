@@ -107,3 +107,62 @@ jobs:
         trap 'kill "$diagnostics_pid" 2>/dev/null || true' EXIT
 
         make test-e2e
+  publish:
+    name: Publish Docker images
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+    - name: Log in to snapshot ACR
+      if: ${{ github.event_name == 'push' }}
+      uses: azure/docker-login@v2
+      with:
+        login-server: ${{ vars.SNAPSHOT_ACR_LOGIN_SERVER }}
+        username: ${{ secrets.SNAPSHOT_ACR_USERNAME }}
+        password: ${{ secrets.SNAPSHOT_ACR_PASSWORD }}
+    - name: Log in to release ACR
+      if: ${{ github.event_name == 'release' }}
+      uses: azure/docker-login@v2
+      with:
+        login-server: ${{ vars.RELEASE_ACR_LOGIN_SERVER }}
+        username: ${{ secrets.RELEASE_ACR_USERNAME }}
+        password: ${{ secrets.RELEASE_ACR_PASSWORD }}
+    - name: Build Docker images
+      run: |
+        make build-image build-zk-image
+    - name: Push snapshot images
+      if: ${{ github.event_name == 'push' }}
+      env:
+        ACR_LOGIN_SERVER: ${{ vars.SNAPSHOT_ACR_LOGIN_SERVER }}
+        IMAGE_NAMESPACE: ${{ vars.ACR_IMAGE_NAMESPACE || 'pravega' }}
+      run: |
+        set -euo pipefail
+        image_tag="snapshot-${GITHUB_SHA::7}"
+        for image in zookeeper-operator zookeeper; do
+          docker tag "pravega/${image}:latest" "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:${image_tag}"
+          docker tag "pravega/${image}:latest" "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:latest"
+          docker push "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:${image_tag}"
+          docker push "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:latest"
+        done
+    - name: Push release images
+      if: ${{ github.event_name == 'release' }}
+      env:
+        ACR_LOGIN_SERVER: ${{ vars.RELEASE_ACR_LOGIN_SERVER }}
+        IMAGE_NAMESPACE: ${{ vars.ACR_IMAGE_NAMESPACE || 'pravega' }}
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
+      run: |
+        set -euo pipefail
+        image_tag="${RELEASE_TAG#v}"
+        for image in zookeeper-operator zookeeper; do
+          docker tag "pravega/${image}:latest" "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:${image_tag}"
+          docker tag "pravega/${image}:latest" "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:latest"
+          docker push "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:${image_tag}"
+          docker push "${ACR_LOGIN_SERVER}/${IMAGE_NAMESPACE}/${image}:latest"
+        done
+ #   - name: Uploading binary files
+ #     uses: actions/upload-artifact@v2
+ #     with:
+ #       name: zookeeper-exporter
+ #       path: bin/zookeeper-exporter*
