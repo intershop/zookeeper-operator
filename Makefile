@@ -23,6 +23,7 @@ GIT_SHA=$(shell git rev-parse --short HEAD)
 TEST_IMAGE=$(TEST_REPO)-testimages:$(VERSION)
 DOCKER_TEST_PASS=testzkop@123
 DOCKER_TEST_USER=testzkop
+KUBECTL_FIELD_MANAGER ?= zookeeper-operator-manifests
 .PHONY: all build check clean test
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -33,7 +34,7 @@ endif
 
 # Install CRDs into a cluster
 install: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+	$(KUSTOMIZE) build config/crd | kubectl apply --server-side -f -
 
 # Uninstall CRDs from a cluster
 uninstall: manifests kustomize
@@ -47,13 +48,16 @@ crds: ## Generate CRDs
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image pravega/zookeeper-operator=$(TEST_IMAGE)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | \
+    kubectl apply --server-side \
+        --field-manager=$(KUBECTL_FIELD_MANAGER) \
+        -f -
 
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy-test: manifests kustomize
 	cd config/test
-	$(KUSTOMIZE) build config/test | kubectl apply -f -
+	$(KUSTOMIZE) build config/test | kubectl apply --server-side -f -
 
 # Undeploy controller in the configured Kubernetes cluster in ~/.kube/config
 undeploy-test: manifests kustomize
@@ -84,17 +88,19 @@ $(LOCALBIN):
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v3.5.4
-CONTROLLER_TOOLS_VERSION ?= v0.9.0
+KUSTOMIZE_VERSION ?= v5.7.1
+CONTROLLER_TOOLS_VERSION ?= v0.19.0
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-.PHONY: kustomize
+.PHONY: kustomize controller-gen FORCE
+FORCE:
+
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
-$(KUSTOMIZE): $(LOCALBIN)
-	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
-.PHONY: controller-gen
+$(KUSTOMIZE): FORCE | $(LOCALBIN)
+	$(KUSTOMIZE) version 2>/dev/null | grep -Fq "$(KUSTOMIZE_VERSION)" || { rm -f $(KUSTOMIZE); curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
+
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+$(CONTROLLER_GEN): FORCE | $(LOCALBIN)
+	$(CONTROLLER_GEN) --version 2>/dev/null | grep -Fq "$(CONTROLLER_TOOLS_VERSION)" || { rm -f $(CONTROLLER_GEN); GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION); }
 
 all: generate check build
 
@@ -148,11 +154,13 @@ test:
 test-e2e: test-e2e-remote
 
 test-e2e-remote:
-	make test-login
 	docker build . -t $(TEST_IMAGE)
-	docker push $(TEST_IMAGE)
+	minikube image load $(TEST_IMAGE)
+	make build-zk-image
+	minikube image load $(APP_REPO):$(VERSION)
 	make deploy
-	RUN_LOCAL=false go test -v -timeout 2h ./test/e2e... -args -ginkgo.v
+	
+	RUN_LOCAL=false ZK_TEST_IMAGE_TAG=$(VERSION) go test -v -timeout 2h ./test/e2e... -args -ginkgo.v
 	make undeploy
 
 test-e2e-local:

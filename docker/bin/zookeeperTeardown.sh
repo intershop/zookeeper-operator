@@ -16,7 +16,6 @@ source /usr/local/bin/zookeeperFunctions.sh
 
 DATA_DIR=/data
 MYID_FILE=$DATA_DIR/myid
-LOG4J_CONF=/conf/log4j-quiet.properties
 
 # Wait for client connections to drain. Kubernetes will wait until the confiugred
 # "terminationGracePeriodSeconds" before focibly killing the container
@@ -38,11 +37,11 @@ set -e
 MYID=`cat $MYID_FILE`
 
 ZNODE_PATH="/zookeeper-operator/$CLUSTER_NAME"
-CLUSTERSIZE=`java -Dlog4j.configuration=file:"$LOG4J_CONF" -jar /opt/libs/zu.jar sync $ZKURL $ZNODE_PATH`
+CLUSTERSIZE=`java -jar /opt/libs/zu.jar sync $ZKURL $ZNODE_PATH`
 echo "CLUSTER_SIZE=$CLUSTERSIZE, MyId=$MYID"
 if [[ -n "$CLUSTERSIZE" && "$CLUSTERSIZE" -lt "$MYID" ]]; then
   # If ClusterSize < MyId, this server is being permanantly removed.
-  java -Dlog4j.configuration=file:"$LOG4J_CONF" -jar /opt/libs/zu.jar remove $ZKURL $MYID
+  java -jar /opt/libs/zu.jar remove $ZKURL $MYID
   echo $?
 fi
 

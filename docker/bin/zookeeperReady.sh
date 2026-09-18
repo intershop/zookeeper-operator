@@ -17,7 +17,6 @@ source /usr/local/bin/zookeeperFunctions.sh
 HOST=`hostname -s`
 DATA_DIR=/data
 MYID_FILE=$DATA_DIR/myid
-LOG4J_CONF=/conf/log4j-quiet.properties
 STATIC_CONFIG=/data/conf/zoo.cfg
 
 OK=$(echo ruok | socat stdio tcp:localhost:$CLIENT_PORT)
@@ -75,9 +74,9 @@ if [[ "$OK" == "imok" ]]; then
       ROLE=participant
       ZKURL=$(zkConnectionString)
       ZKCONFIG=$(zkConfig)
-      java -Dlog4j.configuration=file:"$LOG4J_CONF" -jar /opt/libs/zu.jar remove $ZKURL $MYID
+      java -jar /opt/libs/zu.jar remove $ZKURL $MYID
       sleep 1
-      java -Dlog4j.configuration=file:"$LOG4J_CONF" -jar /opt/libs/zu.jar add $ZKURL $MYID $ZKCONFIG
+      java -jar /opt/libs/zu.jar add $ZKURL $MYID $ZKCONFIG
       exit 0
     else
       echo "Something has gone wrong. Unable to determine zookeeper role."

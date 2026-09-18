@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	policyv1 "k8s.io/api/policy/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -143,6 +142,20 @@ var _ = Describe("Generators Spec", func() {
 					Ω(cfg).To(ContainSubstring("LEADER_PORT=3888\n"))
 				})
 
+			})
+
+			Context("logback.xml", func() {
+				BeforeEach(func() {
+					cfg = cm.Data["logback.xml"]
+				})
+
+				It("should use the ECS encoder", func() {
+					Ω(cfg).To(ContainSubstring("co.elastic.logging.logback.EcsEncoder"))
+				})
+
+				It("should identify ZooKeeper events with an ECS dataset", func() {
+					Ω(cfg).To(ContainSubstring("<eventDataset>zookeeper.log</eventDataset>"))
+				})
 			})
 		})
 		Context("with overridden kubernetes cluster domain", func() {
@@ -315,7 +328,6 @@ var _ = Describe("Generators Spec", func() {
 				sts = zk.MakeStatefulSet(z)
 			})
 			It("Checking the init containers", func() {
-				log.Printf("init container is %v", sts.Spec.Template.Spec)
 				Ω(sts.Spec.Template.Spec.InitContainers[0].Name).To(Equal("testing"))
 				Ω(sts.Spec.Template.Spec.InitContainers[0].Image).To(Equal("dummy-image"))
 			})

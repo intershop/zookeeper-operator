@@ -19,11 +19,14 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/go-logr/zapr"
 	zkConfig "github.com/pravega/zookeeper-operator/pkg/controller/config"
 	"github.com/pravega/zookeeper-operator/pkg/utils"
 	"github.com/pravega/zookeeper-operator/pkg/version"
 	zkClient "github.com/pravega/zookeeper-operator/pkg/zk"
-	"github.com/sirupsen/logrus"
+	"go.elastic.co/ecszap"
+	gozap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,7 +35,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	api "github.com/pravega/zookeeper-operator/api/v1beta1"
 	"github.com/pravega/zookeeper-operator/controllers"
@@ -65,7 +68,13 @@ func main() {
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "127.0.0.1:6000", "The address the metric endpoint binds to.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+	logLevel, logLevelErr := getLogLevel()
+	encoderConfig := ecszap.NewDefaultEncoderConfig()
+	core := ecszap.NewCore(encoderConfig, zapcore.AddSync(os.Stderr), logLevel)
+	ctrl.SetLogger(zapr.NewLogger(gozap.New(core, gozap.AddCaller())))
+	if logLevelErr != nil {
+		log.Error(logLevelErr, "invalid OPERATOR_LOG_LEVEL; using INFO")
+	}
 
 	namespaces, err := getWatchNamespace()
 	if err != nil {
@@ -80,7 +89,7 @@ func main() {
 	}
 
 	if zkConfig.DisableFinalizer {
-		logrus.Warn("----- Running with finalizer disabled. -----")
+		log.Info("running with finalizer disabled")
 	}
 
 	//When operator is started to watch resources in a specific set of namespaces, we use the MultiNamespacedCacheBuilder cache.
@@ -100,7 +109,8 @@ func main() {
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
-		logrus.Fatal(err)
+		log.Error(err, "unable to get Kubernetes configuration")
+		os.Exit(1)
 	}
 
 	operatorNs, err := GetOperatorNamespace()
@@ -117,9 +127,9 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		Cache:              cache.Options{Namespaces: managerNamespaces},
-		MetricsBindAddress: metricsAddr,
+		Scheme:  scheme,
+		Cache:   cache.Options{DefaultNamespaces: namespacesToCacheConfig(managerNamespaces)},
+		Metrics: metricsserver.Options{BindAddress: metricsAddr},
 	})
 	if err != nil {
 		log.Error(err, "unable to start manager")
@@ -142,6 +152,31 @@ func main() {
 		log.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func namespacesToCacheConfig(namespaces []string) map[string]cache.Config {
+	if len(namespaces) == 0 {
+		return nil
+	}
+
+	result := make(map[string]cache.Config, len(namespaces))
+	for _, namespace := range namespaces {
+		result[namespace] = cache.Config{}
+	}
+	return result
+}
+
+func getLogLevel() (zapcore.Level, error) {
+	level := gozap.InfoLevel
+	value, found := os.LookupEnv("OPERATOR_LOG_LEVEL")
+	if !found || strings.TrimSpace(value) == "" {
+		return level, nil
+	}
+
+	if err := level.UnmarshalText([]byte(value)); err != nil {
+		return gozap.InfoLevel, fmt.Errorf("%q is not a valid log level: %w", value, err)
+	}
+	return level, nil
 }
 
 // getWatchNamespace returns the Namespace the operator should be watching for changes

@@ -1,0 +1,14 @@
+# Go module files must always use Unix line endings.
+go.mod text eol=lf
+go.sum text eol=lf
+
+# Keep build and CI files portable.
+Makefile text eol=lf
+*.go text eol=lf
+*.sh text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf
+
+# Gradle wrapper must keep Unix line endings and its executable bit.
+gradlew text eol=lf

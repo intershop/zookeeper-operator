@@ -80,7 +80,9 @@ additionalSidecars: {}
 #   image: nginx:latest
 
 ## Additional Environment Variables.
-additionalEnv: {}
+additionalEnv: []
+# - name: OPERATOR_LOG_LEVEL
+#   value: info
 
 ## Additional volumes required for sidecars.
 additionalVolumes: {}
