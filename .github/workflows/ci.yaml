@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go 1.26.11
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v6
       with:
         go-version: "1.26.11"
       id: go
@@ -35,7 +35,7 @@ jobs:
         sudo ln -sf `which go` `sudo which go` || true
         sudo go version
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
     - name: get go version
       run: go version
     - name: Gofmt and License checks
@@ -43,7 +43,7 @@ jobs:
     - name: unit tests
       run: make test
     - name: Codecov
-      uses: codecov/codecov-action@v1.0.12
+      uses: codecov/codecov-action@v6
     - name: Start minikube
       uses: medyagh/setup-minikube@v0.0.21
       with:
@@ -114,19 +114,19 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Log in to snapshot ACR
       if: ${{ github.event_name == 'push' }}
-      uses: azure/docker-login@v2
+      uses: docker/login-action@v4
       with:
-        login-server: ${{ vars.SNAPSHOT_ACR_LOGIN_SERVER }}
+        registry: ${{ vars.SNAPSHOT_ACR_LOGIN_SERVER }}
         username: ${{ secrets.SNAPSHOT_ACR_USERNAME }}
         password: ${{ secrets.SNAPSHOT_ACR_PASSWORD }}
     - name: Log in to release ACR
       if: ${{ github.event_name == 'release' }}
-      uses: azure/docker-login@v2
+      uses: docker/login-action@v4
       with:
-        login-server: ${{ vars.RELEASE_ACR_LOGIN_SERVER }}
+        registry: ${{ vars.RELEASE_ACR_LOGIN_SERVER }}
         username: ${{ secrets.RELEASE_ACR_USERNAME }}
         password: ${{ secrets.RELEASE_ACR_PASSWORD }}
     - name: Build Docker images
